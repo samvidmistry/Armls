@@ -1,0 +1,56 @@
+{
+    "name": "armls-extension",
+    "displayName": "ARMls Extension" ,
+    "description": "Barebones VS Code extension with configurable LSP path",
+    "repository": {
+	"type": "git",
+	"url": "https://github.com/samvidmistry/armls"
+    },
+    "version": "0.0.1",
+    "engines": {
+	"vscode": "^1.85.0"
+    },
+    "activationEvents": ["onLanguage:json","onLanguage:jsonc"],
+    "main": "./dist/extension.js",
+    "contributes": {
+	"configuration": {
+	    "type": "object",
+	    "title": "ARM Language Server",
+	    "properties": {
+		"armls.path": {
+		    "type": "string",
+		    "default": "",
+		    "description": "Path to the language server executable"
+		}
+	    }
+	},
+	"languages": [
+	    {
+		"id": "json",
+		"aliases": ["JSON"],
+		"extensions": [".json"]
+	    },
+	    {
+		"id": "jsonc",
+		"aliases": ["JSON with Comments"],
+		"extensions": [".jsonc"]
+	    }
+	]
+    },
+    "scripts": {
+	"vscode:prepublish": "tsc -p ./",
+	"compile": "tsc -p ./"
+    },
+    "devDependencies": {
+	"@eslint/js": "^9.13.0",
+	"@stylistic/eslint-plugin": "^2.9.0",
+	"@types/node": "^20",
+	"@types/vscode": "^1.73.0",
+	"eslint": "^9.13.0",
+	"typescript": "^5.8.2",
+	"typescript-eslint": "^8.26.0"
+    },
+    "dependencies": {
+	"vscode-languageclient": "^9.0.0"
+    }
+}
