@@ -24,6 +24,32 @@ public class TSNode
     )]
     private static extern TSPoint ts_node_end_point(TSNodeNative node);
 
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern TSNodeNative ts_node_descendant_for_point_range(
+        TSNodeNative self,
+        TSPoint start,
+        TSPoint end
+    );
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern TSNodeNative ts_node_named_descendant_for_point_range(
+        TSNodeNative self,
+        TSPoint start,
+        TSPoint end
+    );
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern TSTreeCursor ts_tree_cursor_new(TSNodeNative node);
+
     // Ideally I shouldn't be adding LSP specific knowledge
     // to TreeSitter package. But this one is just too convinient.
     public OmniSharp.Extensions.LanguageServer.Protocol.Models.Range GetRange()
@@ -41,6 +67,45 @@ public class TSNode
                 (int)end.column
             )
         );
+    }
+
+    /// <summary>
+    /// Get the smallest node within this node that spans the given range of bytes
+    /// or (row, column) positions.
+    /// </summary>
+    public TSNode DescendantForPointRange(TSPoint start, TSPoint end)
+    {
+        return new TSNode(ts_node_descendant_for_point_range(this.node, start, end));
+    }
+
+    /// <summary>
+    /// Get the smallest named node within this node that spans the given range of bytes
+    /// or (row, column) positions.
+    /// </summary>
+    public TSNode NamedDescendantForPointRange(TSPoint start, TSPoint end)
+    {
+        return new TSNode(ts_node_named_descendant_for_point_range(this.node, start, end));
+    }
+
+    /// <summary>
+    /// Walks the tree up to find a parent with given fieldName
+    /// or null if no such parent exists.
+    /// </summary>
+    public TSNode? NamedParent(string fieldName)
+    {
+        var cursor = Cursor();
+        while (cursor.GoToParent())
+        {
+            if (cursor.CurrentFieldName() == fieldName)
+            {
+                return cursor.CurrentNode();
+            }
+        }
+    }
+
+    public TSTreeCursor Cursor()
+    {
+        return TSTreeCursor(ts_tree_cursor_new(node));
     }
 }
 

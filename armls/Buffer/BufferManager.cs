@@ -27,4 +27,19 @@ public class BufferManager
     {
         return buffers.AsReadOnly();
     }
+
+    public Buffer? GetBuffer(DocumentUri uri)
+    {
+        return GetBuffer(uri.GetFileSystemPath());
+    }
+
+    public Buffer? GetBuffer(string path)
+    {
+        if (buffers.ContainsKey(path))
+        {
+            return buffers[path];
+        }
+
+        return null;
+    }
 }

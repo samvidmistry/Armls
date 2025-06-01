@@ -37,6 +37,8 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
 
     public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
     {
+        // Language ID of json and jsonc are just their names
+        // which are also the extensions of the files.
         return new TextDocumentAttributes(uri, Path.GetExtension(uri.Path));
     }
 
