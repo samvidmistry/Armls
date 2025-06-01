@@ -93,7 +93,7 @@ public class TSNode
     /// </summary>
     public TSNode? NamedParent(string fieldName)
     {
-        var cursor = Cursor();
+        using var cursor = Cursor();
         while (cursor.GoToParent())
         {
             if (cursor.CurrentFieldName() == fieldName)
