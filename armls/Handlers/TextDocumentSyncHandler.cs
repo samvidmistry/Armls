@@ -10,6 +10,21 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
 namespace Armls.Handlers;
 
+/// <summary>
+/// This handler is responsible to receive all updates about changes
+/// in the text published by the language client and update <see
+/// cref="BufferManager" /> with the latest text, i.e., it keeps the
+/// editor window in language client and the <see cref="Buffer" />
+/// stored in <see cref="BufferManager" /> in sync. It is also
+/// responsible to run analysis over entire project when any of the
+/// files change and then publishing the diagnostics returned by the
+/// <see cref="Analyzer" /> to language client. For the documentation
+/// of overridden methods, please refer to <see
+/// href="https://github.com/OmniSharp/csharp-language-server-protocol">C#-LSP</see>
+/// and <see
+/// href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/">LSP
+/// Spec</see>.
+/// </summary>
 public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
 {
     private readonly BufferManager bufManager;
@@ -23,16 +38,6 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
         parser = new TSParser(TSJsonLanguage.Language());
         this.languageServer = languageServer;
         analyzer = new Analyzer.Analyzer(new TSQuery(@"(ERROR) @error", TSJsonLanguage.Language()));
-    }
-
-    public override bool Equals(object? obj)
-    {
-        return base.Equals(obj);
-    }
-
-    public override int GetHashCode()
-    {
-        return base.GetHashCode();
     }
 
     public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
@@ -98,11 +103,18 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
         return new TextDocumentSyncRegistrationOptions(TextDocumentSyncKind.Full);
     }
 
+    /// <summary>
+    /// Utility method to create a <see cref="Buffer" /> out of provided `text`.
+    /// </summary>
     private Buffer.Buffer CreateBuffer(string text)
     {
         return new Buffer.Buffer(text, parser.ParseString(text));
     }
 
+    /// <summary>
+    /// This method is responsible for analyzing and publishing
+    /// diagnostics about all buffers to language client.
+    /// </summary>
     private void AnalyzeWorkspace()
     {
         var diagnostics = analyzer.Analyze(bufManager.GetBuffers());

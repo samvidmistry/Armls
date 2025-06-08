@@ -51,7 +51,7 @@ public class TSNode
     private static extern TSTreeCursor ts_tree_cursor_new(TSNodeNative node);
 
     // Ideally I shouldn't be adding LSP specific knowledge
-    // to TreeSitter package. But this one is just too convinient.
+    // to TreeSitter package. But this one is just too convenient.
     public OmniSharp.Extensions.LanguageServer.Protocol.Models.Range GetRange()
     {
         var start = ts_node_start_point(node);
