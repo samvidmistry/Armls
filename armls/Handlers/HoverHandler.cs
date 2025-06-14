@@ -6,6 +6,14 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace Armls.Handlers;
 
+/// <summary>
+/// Handler responsible for Hover calls from language client. For the
+/// documentation of overridden methods, please refer to <see
+/// href="https://github.com/OmniSharp/csharp-language-server-protocol">C#-LSP</see>
+/// and <see
+/// href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/">LSP
+/// Spec</see>.
+/// </summary>
 public class HoverHandler : HoverHandlerBase
 {
     private BufferManager bufManager;
@@ -45,14 +53,11 @@ public class HoverHandler : HoverHandlerBase
         var node = rootNode.DescendantForPointRange(cursorPosition, cursorPosition);
         var keyParent = node.NamedParent("key");
 
-        if (keyParent is not null)
-        {
-            // we are on the key side
-        }
+        // we are on the key side
+        if (keyParent is not null) { }
         else
-        {
-            // we are on the value side
-        }
+        // we are on the value side
+        { }
     }
 
     public override string? ToString()
