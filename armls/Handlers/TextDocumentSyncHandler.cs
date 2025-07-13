@@ -125,7 +125,7 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
     /// </summary>
     private async Task AnalyzeWorkspaceAsync()
     {
-        var diagnostics = await analyzer.AnalyzeAsync(bufManager.GetBuffers());
+        var diagnostics = await analyzer.AnalyzeAsync(bufManager.GetNotAnalyzedBuffers());
 
         foreach (var buf in diagnostics)
         {
@@ -133,5 +133,7 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
                 new PublishDiagnosticsParams() { Uri = buf.Key, Diagnostics = buf.Value.ToList() }
             );
         }
+
+        bufManager.MarkAnalyzed();
     }
 }

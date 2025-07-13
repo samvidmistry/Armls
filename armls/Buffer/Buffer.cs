@@ -20,6 +20,12 @@ public class Buffer
     public TSTree ConcreteTree;
 
     /// <summary>
+    /// Indicates whether this buffer has been changed since the
+    /// last analysis and requires to be analyzed again.
+    /// </summary>
+    public bool RequiresAnalysis;
+
+    /// <summary>
     /// Creates an instance of <see cref="Buffer" /> with the given
     /// text and concrete syntax tree.
     /// </summary>
@@ -27,6 +33,7 @@ public class Buffer
     {
         Text = text;
         ConcreteTree = tree;
+        RequiresAnalysis = true;
     }
 
     /// <summary>

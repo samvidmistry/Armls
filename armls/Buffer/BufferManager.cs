@@ -47,6 +47,28 @@ public class BufferManager
     }
 
     /// <summary>
+    /// Get a list of buffers that are yet to be analyzed for errors.
+    /// </summary>
+    public IReadOnlyDictionary<string, Buffer> GetNotAnalyzedBuffers()
+    {
+        return buffers
+            .Where(b => b.Value.RequiresAnalysis)
+            .ToDictionary(b => b.Key, b => b.Value)
+            .AsReadOnly();
+    }
+
+    /// <summary>
+    /// Mark all buffers as analyzed.
+    /// </summary>
+    public void MarkAnalyzed()
+    {
+        foreach (var b in buffers.Values)
+        {
+            b.RequiresAnalysis = false;
+        }
+    }
+
+    /// <summary>
     /// Get a <see cref="Buffer" /> pointed to by the `uri`. If the
     /// buffer is not available with the manager (which shouldn't
     /// happen unless the buffer is not a part of the project), it

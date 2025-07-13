@@ -55,17 +55,13 @@ public class Program
             )
             .ToDictionary();
 
-        // var schemaHandler = new SchemaHandler(resources);
-        // var errors = await schemaHandler.ValidateAsync(
-        //     "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-        //     "{\"$schema\": \"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\", \"contentVersion\": \"1.0.0.0\", \"resources\": []}"
-        // );
-
         var server = await LanguageServer.From(options =>
             options
                 .WithInput(Console.OpenStandardInput())
                 .WithOutput(Console.OpenStandardOutput())
-                .WithServices(s => s.AddSingleton(new BufferManager()).AddSingleton(schemaHandler))
+                .WithServices(s =>
+                    s.AddSingleton(new BufferManager()).AddSingleton(new SchemaHandler(resources))
+                )
                 .WithHandler<TextDocumentSyncHandler>()
         );
 

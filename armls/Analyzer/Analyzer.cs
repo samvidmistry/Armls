@@ -53,7 +53,7 @@ public class Analyzer
             }
 
             // Only schema check the syntactically valid files
-            var schemaUrl = buf.GetStringValue(@"$Schema");
+            var schemaUrl = buf.GetStringValue(@"$schema");
             if (schemaUrl is null)
             {
                 continue;

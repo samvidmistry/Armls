@@ -40,7 +40,28 @@ public class SchemaHandler
         var schema = await GetSchemaAsync(schemaUrl);
         JObject.Parse(text).IsValid(schema, out errors);
 
-        return errors;
+        return errors.SelectMany(e => FindLeafErrors(e)).ToList();
+    }
+
+    /// <summary>
+    /// JSON.Net schema library returns a hierarchy of errors
+    /// describing the issues starting at the highest level and then
+    /// using nested errors for lower level errors. For example some
+    /// error in the api version of a particular resource definition
+    /// will indicate errors at all levels starting at resources array
+    /// and then going down each level, like resources > resource
+    /// definition > api version. We are just interested in the final
+    /// error so we recurse down to the leaf errors in this tree and
+    /// return just the leaves.
+    /// </summary>
+    private List<ValidationError> FindLeafErrors(ValidationError error)
+    {
+        if (error.ChildErrors.Count == 0)
+        {
+            return [error];
+        }
+
+        return error.ChildErrors.SelectMany(e => FindLeafErrors(e)).ToList();
     }
 
     /// <summary>
