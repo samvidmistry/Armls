@@ -1,0 +1,46 @@
+{
+  "id": "https://schema.management.azure.com/schemas/2023-05-01/Microsoft.Security.json#",
+  "title": "Microsoft.Security",
+  "description": "Microsoft Security Resource Types",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "subscription_resourceDefinitions": {
+    "serverVulnerabilityAssessmentsSettings": {
+      "description": "Microsoft.Security/serverVulnerabilityAssessmentsSettings",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2023-05-01"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "The kind of the server vulnerability assessments setting",
+          "oneOf": [
+            {
+              "enum": [
+                "azureServersSetting"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.Security/serverVulnerabilityAssessmentsSettings"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    }
+  },
+  "definitions": {}
+}

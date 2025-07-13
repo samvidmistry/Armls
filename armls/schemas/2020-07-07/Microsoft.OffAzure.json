@@ -1,0 +1,693 @@
+{
+  "id": "https://schema.management.azure.com/schemas/2020-07-07/Microsoft.OffAzure.json#",
+  "title": "Microsoft.OffAzure",
+  "description": "Microsoft OffAzure Resource Types",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "resourceDefinitions": {
+    "HyperVSites": {
+      "description": "Microsoft.OffAzure/HyperVSites",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "eTag": {
+          "description": "eTag for concurrency control.",
+          "type": "string"
+        },
+        "location": {
+          "description": "Azure location in which Sites is created.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Site name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Nested properties of Hyper-V site.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/SiteProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "resources": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/HyperVSites_hosts_childResource"
+              },
+              {
+                "$ref": "#/definitions/HyperVSites_clusters_childResource"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "tags": {
+          "description": "Dictionary of <string>",
+          "oneOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.OffAzure/HyperVSites"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "HyperVSites_clusters": {
+      "description": "Microsoft.OffAzure/HyperVSites/clusters",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Cluster ARM name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Nested properties of the cluster.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/HyperVClusterProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.OffAzure/HyperVSites/clusters"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "HyperVSites_hosts": {
+      "description": "Microsoft.OffAzure/HyperVSites/hosts",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Host ARM name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Nested properties.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/HyperVHostProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.OffAzure/HyperVSites/hosts"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "MasterSites": {
+      "description": "Microsoft.OffAzure/MasterSites",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "eTag": {
+          "description": "eTag for concurrency control.",
+          "type": "string"
+        },
+        "location": {
+          "description": "Azure location in which Sites is created.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Site name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Nested properties of Master site.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/MasterSiteProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "resources": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/masterSites_privateEndpointConnections_childResource"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "type": {
+          "enum": [
+            "Microsoft.OffAzure/MasterSites"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "VMwareSites": {
+      "description": "Microsoft.OffAzure/VMwareSites",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "eTag": {
+          "description": "eTag for concurrency control.",
+          "type": "string"
+        },
+        "location": {
+          "description": "Azure location in which Sites is created.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Site name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Nested properties of VMWare site.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/SiteProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "resources": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/VMwareSites_vCenters_childResource"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "tags": {
+          "description": "Dictionary of <string>",
+          "oneOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.OffAzure/VMwareSites"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "VMwareSites_vCenters": {
+      "description": "Microsoft.OffAzure/VMwareSites/vCenters",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "VCenter ARM name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "vCenter nested properties.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/VCenterProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.OffAzure/VMwareSites/vCenters"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "masterSites_privateEndpointConnections": {
+      "description": "Microsoft.OffAzure/masterSites/privateEndpointConnections",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Private link resource name.",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "Microsoft.OffAzure/masterSites/privateEndpointConnections"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "HyperVClusterProperties": {
+      "description": "Class for cluster properties.",
+      "properties": {
+        "fqdn": {
+          "description": "FQDN/IPAddress of the Hyper-V cluster.",
+          "type": "string"
+        },
+        "hostFqdnList": {
+          "description": "List of hosts (FQDN) currently being tracked by the cluster.",
+          "oneOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "runAsAccountId": {
+          "description": "Run as account ID of the Hyper-V cluster.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "HyperVHostProperties": {
+      "description": "Class for host properties.",
+      "properties": {
+        "fqdn": {
+          "description": "FQDN/IPAddress of the Hyper-V host.",
+          "type": "string"
+        },
+        "runAsAccountId": {
+          "description": "Run as account ID of the Hyper-V host.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "HyperVSites_clusters_childResource": {
+      "description": "Microsoft.OffAzure/HyperVSites/clusters",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Cluster ARM name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Nested properties of the cluster.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/HyperVClusterProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "clusters"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "HyperVSites_hosts_childResource": {
+      "description": "Microsoft.OffAzure/HyperVSites/hosts",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Host ARM name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Nested properties.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/HyperVHostProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "hosts"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "MasterSiteProperties": {
+      "description": "Class for site properties.",
+      "properties": {
+        "allowMultipleSites": {
+          "description": "Value indicating whether multiple sites per site type are allowed.",
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "customerStorageAccountArmId": {
+          "description": "Gets or sets a value for customer storage account ARM id.",
+          "type": "string"
+        },
+        "publicNetworkAccess": {
+          "description": "Gets or sets the state of public network access.",
+          "oneOf": [
+            {
+              "enum": [
+                "NotSpecified",
+                "Enabled",
+                "Disabled"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "sites": {
+          "description": "List of sites that are a part of Master Site.",
+          "oneOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SiteAgentProperties": {
+      "description": "Class for site agent properties.",
+      "properties": {
+        "keyVaultId": {
+          "description": "Key vault ARM Id.",
+          "type": "string"
+        },
+        "keyVaultUri": {
+          "description": "Key vault URI.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SiteProperties": {
+      "description": "Class for site properties.",
+      "properties": {
+        "agentDetails": {
+          "description": "On-premises agent details.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/SiteAgentProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "applianceName": {
+          "description": "Appliance Name.",
+          "type": "string"
+        },
+        "discoverySolutionId": {
+          "description": "ARM ID of migration hub solution for SDS.",
+          "type": "string"
+        },
+        "servicePrincipalIdentityDetails": {
+          "description": "Service principal identity details used by agent for communication to the service.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/SiteSpnProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SiteSpnProperties": {
+      "description": "Class for site properties.",
+      "properties": {
+        "aadAuthority": {
+          "description": "AAD Authority URL which was used to request the token for the service principal.",
+          "type": "string"
+        },
+        "applicationId": {
+          "description": "Application/client Id for the service principal with which the on-premise management/data plane components would communicate with our Azure services.",
+          "type": "string"
+        },
+        "audience": {
+          "description": "Intended audience for the service principal.",
+          "type": "string"
+        },
+        "objectId": {
+          "description": "Object Id of the service principal with which the on-premise management/data plane components would communicate with our Azure services.",
+          "type": "string"
+        },
+        "rawCertData": {
+          "description": "Raw certificate data for building certificate expiry flows.",
+          "type": "string"
+        },
+        "tenantId": {
+          "description": "Tenant Id for the service principal with which the on-premise management/data plane components would communicate with our Azure services.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "VCenterProperties": {
+      "description": "Class for vCenter properties.",
+      "properties": {
+        "fqdn": {
+          "description": "FQDN/IPAddress of the vCenter.",
+          "type": "string"
+        },
+        "port": {
+          "description": "Port of the vCenter.",
+          "type": "string"
+        },
+        "runAsAccountId": {
+          "description": "Run as account ID of the vCenter.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "VMwareSites_vCenters_childResource": {
+      "description": "Microsoft.OffAzure/VMwareSites/vCenters",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "VCenter ARM name.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "vCenter nested properties.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/VCenterProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "vCenters"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "masterSites_privateEndpointConnections_childResource": {
+      "description": "Microsoft.OffAzure/masterSites/privateEndpointConnections",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2020-07-07"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Private link resource name.",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "privateEndpointConnections"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

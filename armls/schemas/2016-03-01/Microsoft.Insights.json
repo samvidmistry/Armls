@@ -1,0 +1,159 @@
+{
+  "id": "https://schema.management.azure.com/schemas/2016-03-01/Microsoft.Insights.json#",
+  "title": "Microsoft.Insights",
+  "description": "Microsoft Insights Resource Types",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "subscription_resourceDefinitions": {
+    "logprofiles": {
+      "description": "Microsoft.Insights/logprofiles",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2016-03-01"
+          ],
+          "type": "string"
+        },
+        "location": {
+          "description": "Resource location",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the log profile.",
+          "type": "string"
+        },
+        "properties": {
+          "description": "The log profile properties of the resource.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/LogProfileProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "tags": {
+          "description": "Resource tags",
+          "oneOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.Insights/logprofiles"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "LogProfileProperties": {
+      "description": "The log profile properties.",
+      "properties": {
+        "categories": {
+          "description": "the categories of the logs. These categories are created as is convenient to the user. Some values are: 'Write', 'Delete', and/or 'Action.'",
+          "oneOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "locations": {
+          "description": "List of regions for which Activity Log events should be stored or streamed. It is a comma separated list of valid ARM locations including the 'global' location.",
+          "oneOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "retentionPolicy": {
+          "description": "the retention policy for the events in the log.",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/RetentionPolicy"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "serviceBusRuleId": {
+          "description": "The service bus rule ID of the service bus namespace in which you would like to have Event Hubs created for streaming the Activity Log. The rule ID is of the format: '{service bus resource ID}/authorizationrules/{key name}'.",
+          "type": "string"
+        },
+        "storageAccountId": {
+          "description": "the resource id of the storage account to which you would like to send the Activity Log.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "locations",
+        "categories",
+        "retentionPolicy"
+      ],
+      "type": "object"
+    },
+    "RetentionPolicy": {
+      "description": "Specifies the retention policy for the log.",
+      "properties": {
+        "days": {
+          "description": "the number of days for the retention in days. A value of 0 will retain the events indefinitely.",
+          "oneOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "enabled": {
+          "description": "a value indicating whether the retention policy is enabled.",
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        }
+      },
+      "required": [
+        "enabled",
+        "days"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,303 @@
+{
+  "id": "https://schema.management.azure.com/schemas/2021-08-01-preview/Microsoft.Security.json#",
+  "title": "Microsoft.Security",
+  "description": "Microsoft Security Resource Types",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "resourceDefinitions": {
+    "assignments": {
+      "description": "Microsoft.Security/assignments",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2021-08-01-preview"
+          ],
+          "type": "string"
+        },
+        "etag": {
+          "description": "Entity tag is used for comparing two or more entities from the same requested resource.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind of the resource",
+          "type": "string"
+        },
+        "location": {
+          "description": "Location where the resource is stored",
+          "type": "string"
+        },
+        "name": {
+          "description": "The security assignment key - unique key for the standard assignment",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Properties of a security assignment",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/AssignmentProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "tags": {
+          "description": "A list of key value pairs that describe the resource.",
+          "oneOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.Security/assignments"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    },
+    "standards": {
+      "description": "Microsoft.Security/standards",
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "2021-08-01-preview"
+          ],
+          "type": "string"
+        },
+        "etag": {
+          "description": "Entity tag is used for comparing two or more entities from the same requested resource.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind of the resource",
+          "type": "string"
+        },
+        "location": {
+          "description": "Location where the resource is stored",
+          "type": "string"
+        },
+        "name": {
+          "description": "The Security Standard key - unique key for the standard type",
+          "type": "string"
+        },
+        "properties": {
+          "description": "Properties of a security standard",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/StandardProperties"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "tags": {
+          "description": "A list of key value pairs that describe the resource.",
+          "oneOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "Microsoft.Security/standards"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "properties",
+        "apiVersion",
+        "type"
+      ],
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "AssignedComponentItem": {
+      "description": "describe the properties of a security assessment object reference (by key)",
+      "properties": {
+        "key": {
+          "description": "unique key to a security assessment object",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AssignedStandardItem": {
+      "description": "describe the properties of a of a security standard object reference",
+      "properties": {
+        "id": {
+          "description": "full resourceId of the Microsoft.Security/standard object",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AssignmentProperties": {
+      "description": "Describes the properties of a standardAssignment",
+      "properties": {
+        "additionalData": {
+          "description": "Additional data about the assignment",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/AssignmentPropertiesAdditionalData"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "assignedComponent": {
+          "description": "Component item with key as applied to this standard assignment over the given scope",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/AssignedComponentItem"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "assignedStandard": {
+          "description": "Standard item with key as applied to this standard assignment over the given scope",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/AssignedStandardItem"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "description": {
+          "description": "description of the standardAssignment",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "display name of the standardAssignment",
+          "type": "string"
+        },
+        "effect": {
+          "description": "expected effect of this assignment (Disable/Exempt/etc)",
+          "type": "string"
+        },
+        "expiresOn": {
+          "description": "Expiration date of this assignment as a full ISO date",
+          "format": "date-time",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "The assignment metadata. Metadata is an open ended object and is typically a collection of key value pairs.",
+          "oneOf": [
+            {
+              "type": "object"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "scope": {
+          "description": "Scope to which the standardAssignment applies - can be a subscription path or a resource group under that subscription",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AssignmentPropertiesAdditionalData": {
+      "description": "Additional data about the assignment",
+      "properties": {
+        "exemptionCategory": {
+          "description": "Exemption category of this assignment",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "StandardComponentProperties": {
+      "description": "Describes properties of an component as related to the standard",
+      "properties": {
+        "key": {
+          "description": "Component Key matching componentMetadata",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "StandardProperties": {
+      "description": "Describes properties of a standard.",
+      "properties": {
+        "category": {
+          "description": "category of the standard provided",
+          "type": "string"
+        },
+        "components": {
+          "description": "List of component objects containing component unique keys (such as assessment keys) to apply to standard scope.  Currently only supports assessment keys.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/definitions/StandardComponentProperties"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        },
+        "description": {
+          "description": "description of the standard",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "display name of the standard, equivalent to the standardId",
+          "type": "string"
+        },
+        "supportedClouds": {
+          "description": "List of all standard supported clouds.",
+          "oneOf": [
+            {
+              "items": {
+                "enum": [
+                  "AWS",
+                  "GCP"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "https://schema.management.azure.com/schemas/common/definitions.json#/definitions/expression"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    }
+  }
+}
