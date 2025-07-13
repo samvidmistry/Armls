@@ -4,7 +4,7 @@ namespace Armls.Buffer;
 
 /// <summary>
 /// Represents (roughly) a file on the filesystem or a file open in
-/// the editor.
+/// the editor. In our case, Buffer will always point to a JSON file.
 /// </summary>
 public class Buffer
 {
@@ -27,5 +27,29 @@ public class Buffer
     {
         Text = text;
         ConcreteTree = tree;
+    }
+
+    /// <summary>
+    /// Gets the string value associated with given `key` in the buffer
+    /// JSON.
+    /// </summary>
+    public string? GetStringValue(string key)
+    {
+        var query = new TSQuery(
+            @"(pair (string (string_content) @key) (string (string_content) @value))",
+            TSJsonLanguage.Language()
+        );
+        var cursor = query.Execute(ConcreteTree.RootNode());
+
+        while (cursor.Next(out TSQueryMatch? match))
+        {
+            var captures = match!.Captures();
+            if (captures[0].Text(Text).Equals(key))
+            {
+                return captures[1].Text(Text);
+            }
+        }
+
+        return null;
     }
 }

@@ -17,7 +17,7 @@ public class TSQueryMatch
         match = nativeMatch;
     }
 
-    public ICollection<TSNode> Captures()
+    public IReadOnlyList<TSNode> Captures()
     {
         var capturesList = new List<TSNode>();
         var count = match.capture_count;

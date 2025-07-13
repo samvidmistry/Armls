@@ -58,6 +58,8 @@ public class HoverHandler : HoverHandlerBase
         else
         // we are on the value side
         { }
+
+        return null;
     }
 
     public override string? ToString()

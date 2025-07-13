@@ -28,6 +28,18 @@ public class TSNode
         "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
         CallingConvention = CallingConvention.Cdecl
     )]
+    private static extern uint ts_node_start_byte(TSNodeNative node);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern uint ts_node_end_byte(TSNodeNative node);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
     private static extern TSNodeNative ts_node_descendant_for_point_range(
         TSNodeNative self,
         TSPoint start,
@@ -48,7 +60,7 @@ public class TSNode
         "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
         CallingConvention = CallingConvention.Cdecl
     )]
-    private static extern TSTreeCursor ts_tree_cursor_new(TSNodeNative node);
+    private static extern TSTreeCursorNative ts_tree_cursor_new(TSNodeNative node);
 
     // Ideally I shouldn't be adding LSP specific knowledge
     // to TreeSitter package. But this one is just too convenient.
@@ -67,6 +79,16 @@ public class TSNode
                 (int)end.column
             )
         );
+    }
+
+    /// <summary>
+    /// Just like <see cref="DescendantForPointRange(TSPoint,
+    /// TSPoint)" /> except that it takes in a single point and uses
+    /// it as both the start and the end point of the range.
+    /// </summary>
+    public TSNode DescendantForPoint(TSPoint point)
+    {
+        return new TSNode(ts_node_descendant_for_point_range(this.node, point, point));
     }
 
     /// <summary>
@@ -101,11 +123,28 @@ public class TSNode
                 return cursor.CurrentNode();
             }
         }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Get the text associated with this node in the `sourceText`.
+    /// </summary>
+    public string Text(string sourceText)
+    {
+        var startByte = ts_node_start_byte(node);
+        var length = (int)(ts_node_end_byte(node) - startByte);
+
+        return System.Text.Encoding.UTF8.GetString(
+            System.Text.Encoding.UTF8.GetBytes(sourceText),
+            (int)startByte,
+            length
+        );
     }
 
     public TSTreeCursor Cursor()
     {
-        return TSTreeCursor(ts_tree_cursor_new(node));
+        return new TSTreeCursor(ts_tree_cursor_new(node));
     }
 }
 

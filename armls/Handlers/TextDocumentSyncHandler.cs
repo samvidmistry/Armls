@@ -1,4 +1,5 @@
 ﻿using Armls.Buffer;
+using Armls.Schema;
 using Armls.TreeSitter;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -32,12 +33,19 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
     private readonly TSParser parser;
     private readonly Analyzer.Analyzer analyzer;
 
-    public TextDocumentSyncHandler(BufferManager manager, ILanguageServerFacade languageServer)
+    public TextDocumentSyncHandler(
+        BufferManager manager,
+        ILanguageServerFacade languageServer,
+        SchemaHandler schemaHandler
+    )
     {
         bufManager = manager;
         parser = new TSParser(TSJsonLanguage.Language());
         this.languageServer = languageServer;
-        analyzer = new Analyzer.Analyzer(new TSQuery(@"(ERROR) @error", TSJsonLanguage.Language()));
+        analyzer = new Analyzer.Analyzer(
+            new TSQuery(@"(ERROR) @error", TSJsonLanguage.Language()),
+            schemaHandler
+        );
     }
 
     public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
@@ -47,19 +55,19 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
         return new TextDocumentAttributes(uri, Path.GetExtension(uri.Path));
     }
 
-    public override Task<Unit> Handle(
+    public override async Task<Unit> Handle(
         DidOpenTextDocumentParams request,
         CancellationToken cancellationToken
     )
     {
         bufManager.Add(request.TextDocument.Uri, CreateBuffer(request.TextDocument.Text));
 
-        AnalyzeWorkspace();
+        await AnalyzeWorkspaceAsync();
 
-        return Unit.Task;
+        return Unit.Value;
     }
 
-    public override Task<Unit> Handle(
+    public override async Task<Unit> Handle(
         DidChangeTextDocumentParams request,
         CancellationToken cancellationToken
     )
@@ -68,10 +76,10 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
         if (text is not null)
         {
             bufManager.Add(request.TextDocument.Uri, CreateBuffer(text));
-            AnalyzeWorkspace();
+            await AnalyzeWorkspaceAsync();
         }
 
-        return Unit.Task;
+        return Unit.Value;
     }
 
     public override Task<Unit> Handle(
@@ -115,9 +123,9 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
     /// This method is responsible for analyzing and publishing
     /// diagnostics about all buffers to language client.
     /// </summary>
-    private void AnalyzeWorkspace()
+    private async Task AnalyzeWorkspaceAsync()
     {
-        var diagnostics = analyzer.Analyze(bufManager.GetBuffers());
+        var diagnostics = await analyzer.AnalyzeAsync(bufManager.GetBuffers());
 
         foreach (var buf in diagnostics)
         {

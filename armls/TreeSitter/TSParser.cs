@@ -63,7 +63,7 @@ public class TSParser
     public TSTree ParseString(string text)
     {
         var (nativeText, length) = Utils.GetUnmanagedUTF8String(text);
-        return new TSTree(
+        var tree = new TSTree(
             ts_parser_parse_string_encoding(
                 parser,
                 IntPtr.Zero,
@@ -72,6 +72,8 @@ public class TSParser
                 TSInputEncoding.TSInputEncodingUTF8
             )
         );
+        Marshal.FreeHGlobal(nativeText);
+        return tree;
     }
 
     ~TSParser()

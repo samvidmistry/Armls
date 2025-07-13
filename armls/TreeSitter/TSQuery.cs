@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 public class TSQuery
 {
     private IntPtr query;
+    private IntPtr queryString;
 
     [DllImport(
         "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
@@ -40,11 +41,14 @@ public class TSQuery
     public TSQuery(string queryString, IntPtr language)
     {
         var (nativeQuery, length) = Utils.GetUnmanagedUTF8String(queryString);
+        this.queryString = nativeQuery;
         uint errorOffset;
         int errorType;
         query = ts_query_new(language, nativeQuery, length, out errorOffset, out errorType);
         if (query == IntPtr.Zero)
         {
+            Marshal.FreeHGlobal(this.queryString);
+            this.queryString = IntPtr.Zero;
             throw new Exception(
                 $"Failed to create TSQuery. Error at offset {errorOffset}, type {errorType}"
             );
@@ -64,6 +68,12 @@ public class TSQuery
         {
             ts_query_delete(query);
             query = IntPtr.Zero;
+        }
+
+        if (queryString != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(queryString);
+            queryString = IntPtr.Zero;
         }
     }
 }
