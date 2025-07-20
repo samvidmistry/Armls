@@ -1,5 +1,7 @@
 ﻿using Armls.Schema;
 using Armls.TreeSitter;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace Armls.Analyzer;
@@ -13,22 +15,17 @@ namespace Armls.Analyzer;
 public class Analyzer
 {
     private readonly TSQuery errorQuery;
-    private readonly SchemaHandler schemaHandler;
+    private readonly MinimalSchemaComposer schemaComposer;
 
     /// <summary>
-    /// Creates an instance of Analyzer. To keep it independent of
-    /// which language it is syntax checking, I take in a <see
-    /// cref="TSQuery" /> which queries error nodes out of parse tree.
-    /// I was hoping to keep the analyzer independent of the
-    /// underlying language it is analyzing. But I am now realizing
-    /// that it won't really be possible to separate the analysis from
-    /// the underlying mechanism of describing the configuration,
-    /// which is through JSON. Let's see how it goes.
+    /// Creates an instance of Analyzer for ARM template validation.
+    /// Uses dynamic schema composition to load only the schemas needed
+    /// for the resource types actually used in templates.
     /// </summary>
-    public Analyzer(TSQuery errorQuery, SchemaHandler schemaHandler)
+    public Analyzer(TSQuery errorQuery, MinimalSchemaComposer schemaComposer)
     {
         this.errorQuery = errorQuery;
-        this.schemaHandler = schemaHandler;
+        this.schemaComposer = schemaComposer;
     }
 
     /// <summary>
@@ -59,13 +56,46 @@ public class Analyzer
                 continue;
             }
 
-            var errors = await schemaHandler.ValidateAsync(schemaUrl, buf.Text);
-            diagnostics[path] = errors
+            // Extract resource types with their API versions from the ARM template
+            var resourceTypesWithVersions = buf.GetResourceTypes();
+
+            // Compose minimal schema with only needed resource definitions
+            var schema = await schemaComposer.ComposeSchemaAsync(
+                schemaUrl,
+                resourceTypesWithVersions
+            );
+
+            if (schema is null)
+            {
+                diagnostics[path] = new List<Diagnostic>
+                {
+                    new Diagnostic
+                    {
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                            new Position(0, 0),
+                            new Position(0, 0)
+                        ),
+                        Message = $"Failed to load schema {schemaUrl}",
+                        Severity = DiagnosticSeverity.Warning,
+                    },
+                };
+                continue;
+            }
+
+            IList<ValidationError> errors;
+            var isValid = JToken.Parse(buf.Text).IsValid(schema, out errors);
+            diagnostics[path] = GetLeafErrors(errors)
+                .Where(e => !e.Message.Contains("Expected Object but got Array."))
                 .Select(e => new Diagnostic
                 {
                     Range = buf
                         .ConcreteTree.RootNode()
-                        .DescendantForPoint(
+                        .NamedDescendantForPointRange(
+                            new TSPoint
+                            {
+                                row = (uint)e.LineNumber - 1,
+                                column = (uint)e.LinePosition - 1,
+                            },
                             new TSPoint
                             {
                                 row = (uint)e.LineNumber - 1,
@@ -74,6 +104,7 @@ public class Analyzer
                         )
                         .GetRange(),
                     Message = e.Message,
+                    Severity = DiagnosticSeverity.Warning,
                 })
                 .ToList();
         }
@@ -106,5 +137,22 @@ public class Analyzer
         }
 
         return diagnostics;
+    }
+
+    private List<ValidationError> GetLeafErrors(IList<ValidationError> errors)
+    {
+        var leafErrors = new List<ValidationError>();
+        foreach (var error in errors)
+        {
+            if (error.ChildErrors == null || error.ChildErrors.Count == 0)
+            {
+                leafErrors.Add(error);
+            }
+            else
+            {
+                leafErrors.AddRange(GetLeafErrors(error.ChildErrors));
+            }
+        }
+        return leafErrors;
     }
 }

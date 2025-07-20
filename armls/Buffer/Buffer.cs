@@ -59,4 +59,65 @@ public class Buffer
 
         return null;
     }
+
+    /// <summary>
+    /// Extracts all resource types and their API versions from the ARM template's resources array.
+    /// Returns a dictionary mapping resource types to their API versions like {"Microsoft.Storage/storageAccounts": "2021-04-01"}.
+    /// </summary>
+    public Dictionary<string, string> GetResourceTypes()
+    {
+        var resourceTypesWithVersions = new Dictionary<string, string>();
+
+        // Query to find all resource objects within resources array
+        var query = new TSQuery(
+            @"(pair (string (string_content) @key) (array (object) @resource))",
+            TSJsonLanguage.Language()
+        );
+        var cursor = query.Execute(ConcreteTree.RootNode());
+
+        while (cursor.Next(out TSQueryMatch? match))
+        {
+            var captures = match!.Captures();
+            if (captures.Count >= 2 && captures[0].Text(Text).Equals("resources"))
+            {
+                var resourceNode = captures[1];
+
+                var resourceType = GetPropertyValue(resourceNode, "type");
+                var apiVersion = GetPropertyValue(resourceNode, "apiVersion");
+
+                if (
+                    !string.IsNullOrWhiteSpace(resourceType)
+                    && !string.IsNullOrWhiteSpace(apiVersion)
+                )
+                {
+                    resourceTypesWithVersions[resourceType] = apiVersion;
+                }
+            }
+        }
+
+        return resourceTypesWithVersions;
+    }
+
+    /// <summary>
+    /// Helper method to extract a property value from a JSON object node.
+    /// </summary>
+    private string? GetPropertyValue(TSNode objectNode, string propertyName)
+    {
+        var propertyQuery = new TSQuery(
+            @"(pair (string (string_content) @prop_key) (string (string_content) @prop_value))",
+            TSJsonLanguage.Language()
+        );
+        var propertyCursor = propertyQuery.Execute(objectNode);
+
+        while (propertyCursor.Next(out TSQueryMatch? propMatch))
+        {
+            var propCaptures = propMatch!.Captures();
+            if (propCaptures.Count >= 2 && propCaptures[0].Text(Text).Equals(propertyName))
+            {
+                return propCaptures[1].Text(Text);
+            }
+        }
+
+        return null;
+    }
 }

@@ -36,7 +36,7 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
     public TextDocumentSyncHandler(
         BufferManager manager,
         ILanguageServerFacade languageServer,
-        SchemaHandler schemaHandler
+        MinimalSchemaComposer schemaComposer
     )
     {
         bufManager = manager;
@@ -44,7 +44,7 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
         this.languageServer = languageServer;
         analyzer = new Analyzer.Analyzer(
             new TSQuery(@"(ERROR) @error", TSJsonLanguage.Language()),
-            schemaHandler
+            schemaComposer
         );
     }
 
@@ -60,7 +60,13 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
         CancellationToken cancellationToken
     )
     {
-        bufManager.Add(request.TextDocument.Uri, CreateBuffer(request.TextDocument.Text));
+        var buf = CreateBuffer(request.TextDocument.Text);
+        if (!IsArmTemplate(buf))
+        {
+            return Unit.Value;
+        }
+
+        bufManager.Add(request.TextDocument.Uri, buf);
 
         await AnalyzeWorkspaceAsync();
 
@@ -75,6 +81,12 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
         var text = request.ContentChanges.FirstOrDefault()?.Text;
         if (text is not null)
         {
+            var buf = CreateBuffer(text);
+            if (!IsArmTemplate(buf))
+            {
+                return Unit.Value;
+            }
+
             bufManager.Add(request.TextDocument.Uri, CreateBuffer(text));
             await AnalyzeWorkspaceAsync();
         }
@@ -117,6 +129,12 @@ public class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
     private Buffer.Buffer CreateBuffer(string text)
     {
         return new Buffer.Buffer(text, parser.ParseString(text));
+    }
+
+    private bool IsArmTemplate(Buffer.Buffer buf)
+    {
+        var schema = buf.GetStringValue("$schema");
+        return !string.IsNullOrWhiteSpace(schema) && schema.Contains("deploymentTemplate.json");
     }
 
     /// <summary>
