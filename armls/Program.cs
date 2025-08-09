@@ -33,6 +33,7 @@ public class Program
                     s.AddSingleton(new BufferManager()).AddSingleton(new MinimalSchemaComposer())
                 )
                 .WithHandler<TextDocumentSyncHandler>()
+                .WithHandler<HoverHandler>()
         );
 
         await server.WaitForExit;

@@ -1,4 +1,5 @@
 ﻿using Armls.Buffer;
+using Armls.Schema;
 using Armls.TreeSitter;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -17,10 +18,12 @@ namespace Armls.Handlers;
 public class HoverHandler : HoverHandlerBase
 {
     private BufferManager bufManager;
+    private MinimalSchemaComposer schemaComposer;
 
-    public HoverHandler(BufferManager manager)
+    public HoverHandler(BufferManager manager, MinimalSchemaComposer schemaComposer)
     {
         bufManager = manager;
+        this.schemaComposer = schemaComposer;
     }
 
     public override bool Equals(object? obj)
@@ -33,14 +36,22 @@ public class HoverHandler : HoverHandlerBase
         return base.GetHashCode();
     }
 
-    public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
+    public override async Task<Hover?> Handle(
+        HoverParams request,
+        CancellationToken cancellationToken
+    )
     {
         var buffer = bufManager.GetBuffer(request.TextDocument.Uri);
-
         if (buffer is null)
-        {
-            return Task.FromResult((Hover?)null);
-        }
+            return null;
+
+        var schemaUrl = buffer.GetStringValue("$schema");
+        if (schemaUrl is null)
+            return null;
+
+        var schema = await schemaComposer.ComposeSchemaAsync(schemaUrl, buffer.GetResourceTypes());
+        if (schema is null)
+            return null;
 
         var cursorPosition = new TSPoint()
         {
@@ -48,18 +59,26 @@ public class HoverHandler : HoverHandlerBase
             column = (uint)request.Position.Character,
         };
 
-        // Check which side of the expression we are on, key or value
         var rootNode = buffer.ConcreteTree.RootNode();
-        var node = rootNode.DescendantForPointRange(cursorPosition, cursorPosition);
-        var keyParent = node.NamedParent("key");
+        var hoveredNode = rootNode.DescendantForPointRange(cursorPosition, cursorPosition);
+        if (hoveredNode is null)
+            return null;
 
-        // we are on the key side
-        if (keyParent is not null) { }
-        else
-        // we are on the value side
-        { }
+        var path = Json.JsonPathGenerator.FromNode(buffer, hoveredNode);
+        if (path.Count == 0)
+            return null;
 
-        return null;
+        var targetSchema = Schema.SchemaNavigator.FindSchemaByPath(schema, path);
+        if (targetSchema?.Description is null)
+            return null;
+
+        return new Hover
+        {
+            Contents = new MarkedStringsOrMarkupContent(
+                new MarkupContent { Kind = MarkupKind.Markdown, Value = targetSchema.Description }
+            ),
+            Range = hoveredNode.GetRange(),
+        };
     }
 
     public override string? ToString()
