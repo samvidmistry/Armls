@@ -60,7 +60,70 @@ public class TSNode
         "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
         CallingConvention = CallingConvention.Cdecl
     )]
+    private static extern IntPtr ts_node_type(TSNodeNative node);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern TSNodeNative ts_node_child_by_field_name(
+        TSNodeNative self,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string fieldName,
+        uint fieldNameLength
+    );
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern uint ts_node_named_child_count(TSNodeNative node);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern TSNodeNative ts_node_named_child(TSNodeNative node, uint index);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern TSNodeNative ts_node_parent(TSNodeNative node);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
     private static extern TSTreeCursorNative ts_tree_cursor_new(TSNodeNative node);
+
+    public TSNode? Parent()
+    {
+        var parentNode = ts_node_parent(node);
+        if (parentNode.id == IntPtr.Zero)
+        {
+            return null;
+        }
+        return new TSNode(parentNode);
+    }
+
+    public string Type => Marshal.PtrToStringUTF8(ts_node_type(node));
+
+    public uint NamedChildCount => ts_node_named_child_count(node);
+
+    public TSNode? ChildByFieldName(string fieldName)
+    {
+        var childNode = ts_node_child_by_field_name(node, fieldName, (uint)fieldName.Length);
+        if (childNode.id == IntPtr.Zero)
+        {
+            return null;
+        }
+        return new TSNode(childNode);
+    }
+
+    public TSNode NamedChild(uint index)
+    {
+        return new TSNode(ts_node_named_child(node, index));
+    }
 
     // Ideally I shouldn't be adding LSP specific knowledge
     // to TreeSitter package. But this one is just too convenient.
