@@ -28,179 +28,113 @@ public class MinimalSchemaComposer
     }
 
     /// <summary>
-    /// Creates a minimal schema by downloading the full deploymentTemplate.json schema from the internet,
-    /// filtering its resource references to only include detected resource types,
-    /// and using a preloaded resolver with provider schemas loaded from local files.
+    /// For non `deploymentTemplate` schemas, it downloads the schema
+    /// off the internet and returns it unmodified. For
+    /// `deploymentTemplate`, creates a minimal schema by downloading
+    /// the full deploymentTemplate.json schema from the internet,
+    /// filtering its resource references to only include detected
+    /// resource types, and using a preloaded resolver with provider
+    /// schemas loaded from local files.
     /// </summary>
     public async Task<JSchema?> ComposeSchemaAsync(
         string baseSchemaUrl,
         Dictionary<string, string> resourceTypesWithVersions
     )
     {
-        // Download the base deploymentTemplate.json schema from the internet
-        if (!schemaJsonCache.TryGetValue(baseSchemaUrl, out var cachedSchemaJson))
+        if (!schemaJsonCache.TryGetValue(baseSchemaUrl, out var schemaJson))
         {
-            schemaJsonCache[baseSchemaUrl] = await httpClient.GetStringAsync(baseSchemaUrl);
+            schemaJson = await httpClient.GetStringAsync(baseSchemaUrl);
+            schemaJsonCache[baseSchemaUrl] = schemaJson;
         }
 
-        var baseSchemaJson = schemaJsonCache[baseSchemaUrl];
-
-        // Create preloaded resolver with provider schemas loaded from local files
-        var resolver = new JSchemaPreloadedResolver();
-
-        // Create schema URLs only for referred/used resources
-        var schemaUrls = new HashSet<string>();
-
-        foreach (var kvp in resourceTypesWithVersions)
+        if (!baseSchemaUrl.Contains("deploymentTemplate.json"))
         {
-            var resourceType = kvp.Key;
-            var apiVersion = kvp.Value;
-
-            // Split resource type: Microsoft.Storage/storageAccounts -> ["Microsoft.Storage", "storageAccounts"]
-            var parts = resourceType.Split('/');
-            if (parts.Length < 2)
-                continue;
-
-            var provider = parts[0]; // "Microsoft.Storage"
-
-            // Generate base schema URL (without the fragment)
-            // Pattern: https://schema.management.azure.com/schemas/2021-04-01/Microsoft.Storage.json
-            schemaUrls.Add(
-                $"https://schema.management.azure.com/schemas/{apiVersion}/{provider}.json"
+            return JSchema.Load(
+                new JsonTextReader(new StringReader(schemaJson)),
+                new JSchemaUrlResolver()
             );
         }
 
-        // Always include the common definitions
-        schemaUrls.Add("https://schema.management.azure.com/schemas/common/definitions.json");
-
-        // Load each provider schema from local files and add to resolver
-        foreach (var schemaUrl in schemaUrls)
+        var resolver = new JSchemaPreloadedResolver();
+        var resourceReferences = new JArray();
+        var schemaUrls = new HashSet<string>
         {
-            if (!schemaIndex.TryGetValue(schemaUrl, out var filename))
-            {
-                continue;
-            }
+            "https://schema.management.azure.com/schemas/common/definitions.json",
+        };
 
-            var filePath = Path.Combine(schemaDirectory, filename);
-            if (!File.Exists(filePath))
-            {
+        foreach (var (resourceType, apiVersion) in resourceTypesWithVersions)
+        {
+            var parts = resourceType.Split('/');
+            if (parts.Length < 2)
                 continue;
-            }
+            var provider = parts[0];
+            var resourceName = parts[1];
+            var schemaUrl =
+                $"https://schema.management.azure.com/schemas/{apiVersion}/{provider}.json";
 
-            var schemaContent = await File.ReadAllTextAsync(filePath);
-            if (schemaContent != null)
-            {
-                resolver.Add(new Uri(schemaUrl), schemaContent);
-            }
+            schemaUrls.Add(schemaUrl);
+            resourceReferences.Add(
+                new JObject { ["$ref"] = $"{schemaUrl}#/resourceDefinitions/{resourceName}" }
+            );
         }
 
-        // Filter the schema to only reference needed resource types
-        var minimalSchemaJson = ConstructSchemaWithResources(
-            baseSchemaJson,
-            resourceTypesWithVersions
-        );
+        (
+            await Task.WhenAll(
+                schemaUrls
+                    .Where(url =>
+                        schemaIndex.TryGetValue(url, out var filename)
+                        && File.Exists(Path.Combine(schemaDirectory, filename))
+                    )
+                    .Select(async url => new
+                    {
+                        Url = new Uri(url),
+                        Content = await File.ReadAllTextAsync(
+                            Path.Combine(schemaDirectory, schemaIndex[url])
+                        ),
+                    })
+            )
+        )
+            .ToList()
+            .ForEach(s => resolver.Add(s.Url, s.Content));
 
-        if (minimalSchemaJson is null)
-        {
-            return null;
-        }
-
-        // Load schema using preloaded resolver (provider schemas from local files)
-        using var minimalReader = new JsonTextReader(new StringReader(minimalSchemaJson));
-
-        return JSchema.Load(minimalReader, resolver);
+        return ConstructSchemaWithResources(schemaJson, resourceReferences) is { } minimalSchemaJson
+            ? JSchema.Load(new JsonTextReader(new StringReader(minimalSchemaJson)), resolver)
+            : null;
     }
 
     /// <summary>
     /// Generates a minimal deploymentTemplate.json schema by:
     /// 1. Replacing the 1300+ references in branch 0 with only our detected resource types
-    /// 2. Removing the autogeneratedResources.json reference (branch 3)
-    /// 3. Keeping branches 1 and 2 intact for external and deployment resources
+    /// 2. Removing all other resource definition branches to keep the schema minimal.
     /// </summary>
-    private string? ConstructSchemaWithResources(
-        string baseSchemaJson,
-        Dictionary<string, string> resourceTypesWithVersions
-    )
+    private string? ConstructSchemaWithResources(string baseSchemaJson, JArray resourceReferences)
     {
         try
         {
             var schemaObj = JObject.Parse(baseSchemaJson);
 
-            // Navigate to: definitions.resource.oneOf
-            // Structure: [branch0, branch1, branch2, autogeneratedResources]
-            var resourceDefinition = schemaObj["definitions"]?["resource"];
-            var oneOfArray = resourceDefinition?["oneOf"] as JArray;
-
-            if (oneOfArray == null || oneOfArray.Count < 4)
+            if (
+                schemaObj.SelectToken("definitions.resource.oneOf[0].allOf[1].oneOf")
+                is JArray resourceRefsArray
+            )
             {
-                return baseSchemaJson;
+                resourceRefsArray.Replace(resourceReferences);
             }
 
-            // Branch 0: allOf[resourceBase, {oneOf: [1300+ refs]}] - Replace with minimal refs
-            var branch0 = oneOfArray[0] as JObject;
-            var allOfArray = branch0?["allOf"] as JArray;
-            var secondAllOf = allOfArray?[1] as JObject;
-            var resourceRefsArray = secondAllOf?["oneOf"] as JArray;
-
-            if (resourceRefsArray != null)
+            if (
+                schemaObj.SelectToken("definitions.resource.oneOf") is JArray oneOfArray
+                && oneOfArray.Any()
+            )
             {
-                // Replace with our minimal references
-                var minimalRefs = GenerateResourceReferences(resourceTypesWithVersions);
-                secondAllOf["oneOf"] = minimalRefs;
+                oneOfArray.ReplaceAll(oneOfArray.First());
             }
-
-            // Branch 1: Remove external resources
-            oneOfArray.RemoveAt(1);
-
-            // Branch 2: Remove deployment resources
-            oneOfArray.RemoveAt(1);
-
-            // Branch 3: Remove autogeneratedResources reference
-            oneOfArray.RemoveAt(1);
 
             return schemaObj.ToString();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Return original schema if generation fails
             return null;
         }
-    }
-
-    /// <summary>
-    /// Generates schema reference objects for the detected resource types.
-    /// Uses the pattern: https://schema.management.azure.com/schemas/{apiVersion}/{provider}.json#/resourceDefinitions/{resourceName}
-    /// </summary>
-    private static JArray GenerateResourceReferences(
-        Dictionary<string, string> resourceTypesWithVersions
-    )
-    {
-        var references = new JArray();
-
-        foreach (var kvp in resourceTypesWithVersions)
-        {
-            var resourceType = kvp.Key;
-            var apiVersion = kvp.Value;
-
-            // Split resource type: Microsoft.Storage/storageAccounts -> ["Microsoft.Storage", "storageAccounts"]
-            var parts = resourceType.Split('/');
-            if (parts.Length < 2)
-                continue;
-
-            var provider = parts[0]; // "Microsoft.Storage"
-            var resourceName = parts[1]; // "storageAccounts"
-
-            // Generate schema URL using the actual API version from the ARM template
-            // Pattern: https://schema.management.azure.com/schemas/2021-04-01/Microsoft.Storage.json#/resourceDefinitions/storageAccounts
-            var schemaUrl =
-                $"https://schema.management.azure.com/schemas/{apiVersion}/{provider}.json#/resourceDefinitions/{resourceName}";
-
-            // Create reference object
-            var refObject = new JObject { ["$ref"] = schemaUrl };
-
-            references.Add(refObject);
-        }
-
-        return references;
     }
 }
