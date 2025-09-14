@@ -34,6 +34,7 @@ public class Program
                 )
                 .WithHandler<TextDocumentSyncHandler>()
                 .WithHandler<HoverHandler>()
+                .WithHandler<CompletionHandler>()
         );
 
         await server.WaitForExit;
