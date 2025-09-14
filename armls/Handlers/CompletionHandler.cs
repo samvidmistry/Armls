@@ -71,29 +71,42 @@ public class CompletionHandler : CompletionHandlerBase
             column = (uint)request.Position.Character,
         };
 
-	// Schema path contains the path /till/ the last element, which in our case is the field we are trying to write.
+        // Schema path contains the path /till/ the last element, which in our case is the field we are trying to write.
         // So we get the path only till the parent.
-        var path = Json.JsonPathGenerator.FromNode(buffer, buffer.ConcreteTree.RootNode().DescendantForPoint(cursor).Parent());
+	var parentNode = buffer.ConcreteTree.RootNode().DescendantForPoint(cursor).Parent();
+	if (parentNode is null) return completionList;
+	
+        var path = Json.JsonPathGenerator.FromNode(buffer, parentNode);
         if (path is null || path.Count == 0) return completionList;
         
         var targetSchema = Schema.SchemaNavigator.FindSchemaByPath(schema, path);
         if (targetSchema is null) return completionList;
 
-        return new CompletionList(FindCompletionCandidates(targetSchema).DistinctBy(c => c.Label + ":" + c.Documentation));
+	// Get existing keys
+	while (parentNode is not null && parentNode.Type != "object")
+	{
+	    parentNode = parentNode.Parent();
+	}
+	
+	var existingKeys = parentNode?.Keys().Select(n => n.Text(buffer.Text));
+
+        return new CompletionList(
+	    FindCompletionCandidates(targetSchema).DistinctBy(c => c.Label + ":" + c.Documentation)
+                   .Where(c => existingKeys is not null && !existingKeys.Contains(c.Label)));
     }
 
     private IEnumerable<CompletionItem> FindCompletionCandidates(JSchema schema)
     {
-	if (schema.AllOf.Count != 0 || schema.AnyOf.Count != 0 || schema.OneOf.Count != 0)
-	{
-	    return schema.AllOf.Concat(schema.AnyOf).Concat(schema.OneOf).SelectMany(childSchema => FindCompletionCandidates(childSchema));
-	}
+        if (schema.AllOf.Count != 0 || schema.AnyOf.Count != 0 || schema.OneOf.Count != 0)
+        {
+            return schema.AllOf.Concat(schema.AnyOf).Concat(schema.OneOf).SelectMany(childSchema => FindCompletionCandidates(childSchema));
+        }
 
-	return schema.Properties.Select(kvp => new CompletionItem()
-	{
-	    Label = kvp.Key,
-	    Documentation = new StringOrMarkupContent(kvp.Value.Description ?? "")
-	});
+        return schema.Properties.Select(kvp => new CompletionItem()
+        {
+            Label = kvp.Key,
+            Documentation = new StringOrMarkupContent(kvp.Value.Description ?? "")
+        });
     }
 
     public override string? ToString()

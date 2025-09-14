@@ -191,6 +191,21 @@ public class TSNode
     }
 
     /// <summary>
+    /// Gets all the keys from all the pairs defined under this node.
+    /// </summary>
+    public IEnumerable<TSNode> Keys()
+    {
+	List<TSNode> keys = new();
+	var cursor = new TSQuery(@"(pair (string (string_content) @key) (_))", TSJsonLanguage.Language()).Execute(this);
+	while (cursor.Next(out var queryMatch))
+	{
+	    keys.AddRange(queryMatch?.Captures() ?? []);
+	}
+
+	return keys;
+    }
+
+    /// <summary>
     /// Get the text associated with this node in the `sourceText`.
     /// </summary>
     public string Text(string sourceText)
