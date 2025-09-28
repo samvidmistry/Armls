@@ -82,7 +82,19 @@ public class TSNode
         "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
         CallingConvention = CallingConvention.Cdecl
     )]
+    private static extern uint ts_node_child_count(TSNodeNative node);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
     private static extern TSNodeNative ts_node_named_child(TSNodeNative node, uint index);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    private static extern TSNodeNative ts_node_child(TSNodeNative node, uint index);
 
     [DllImport(
         "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
@@ -95,6 +107,20 @@ public class TSNode
         CallingConvention = CallingConvention.Cdecl
     )]
     private static extern TSTreeCursorNative ts_tree_cursor_new(TSNodeNative node);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static extern bool ts_node_eq(TSNodeNative self, TSNodeNative other);
+
+    [DllImport(
+        "/Users/samvidmistry/projects/lsp/armls/tree-sitter/libtree-sitter.dylib",
+        CallingConvention = CallingConvention.Cdecl
+    )]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static extern bool ts_node_is_null(TSNodeNative node);
 
     public TSNode? Parent()
     {
@@ -110,6 +136,14 @@ public class TSNode
 
     public uint NamedChildCount => ts_node_named_child_count(node);
 
+    public uint ChildCount => ts_node_child_count(node);
+
+    public bool IsNull => ts_node_is_null(node);
+
+    public TSPoint Start => ts_node_start_point(node);
+
+    public TSPoint End => ts_node_end_point(node);
+
     public TSNode? ChildByFieldName(string fieldName)
     {
         var childNode = ts_node_child_by_field_name(node, fieldName, (uint)fieldName.Length);
@@ -123,6 +157,11 @@ public class TSNode
     public TSNode NamedChild(uint index)
     {
         return new TSNode(ts_node_named_child(node, index));
+    }
+
+    public TSNode Child(uint index)
+    {
+        return new TSNode(ts_node_child(node, index));
     }
 
     // Ideally I shouldn't be adding LSP specific knowledge
@@ -155,8 +194,11 @@ public class TSNode
     }
 
     /// <summary>
-    /// Get the smallest node within this node that spans the given range of bytes
-    /// or (row, column) positions.
+    /// Get the smallest node within this node that spans the given
+    /// range of bytes or (row, column) positions. If such node cannot
+    /// be found, for example, when the start and end are outside the
+    /// bounds of this node, it will return the TSNode on which the
+    /// search was being performed.
     /// </summary>
     public TSNode DescendantForPointRange(TSPoint start, TSPoint end)
     {
@@ -190,19 +232,28 @@ public class TSNode
         return null;
     }
 
+    public bool NodeEquals(TSNode n)
+    {
+	return ts_node_eq(this.node, n.node);
+    }
+
     /// <summary>
-    /// Gets all the keys from all the pairs defined under this node.
+    /// Gets all the keys from all the pairs defined DIRECTLY under this node.
+    /// It won't recursively extract all keys from child objects.
     /// </summary>
     public IEnumerable<TSNode> Keys()
     {
 	List<TSNode> keys = new();
-	var cursor = new TSQuery(@"(pair (string (string_content) @key) (_))", TSJsonLanguage.Language()).Execute(this);
+	var cursor = new TSQuery(@"(pair key: (string (string_content) @key))", TSJsonLanguage.Language()).Execute(this);
 	while (cursor.Next(out var queryMatch))
 	{
 	    keys.AddRange(queryMatch?.Captures() ?? []);
 	}
 
-	return keys;
+	// structure of n is like this
+	// (object (pair (string (string_content) <- n)))
+	// so we need to call Parent() 3 times to get to the current object
+	return keys.Where(n => n.Parent()?.Parent()?.Parent()?.NodeEquals(this) ?? false);
     }
 
     /// <summary>

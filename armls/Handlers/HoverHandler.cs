@@ -64,7 +64,7 @@ public class HoverHandler : HoverHandlerBase
         if (hoveredNode is null)
             return null;
 
-        var path = Json.JsonPathGenerator.FromNode(buffer, hoveredNode);
+        var path = Json.JsonPathGenerator.FromNode(buffer, hoveredNode, buffer.Text);
         if (path.Count == 0)
             return null;
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json.Schema;
 
 namespace Armls.Schema
@@ -8,7 +9,7 @@ namespace Armls.Schema
     /// A static utility class to navigate a JSchema object using a JSON path.
     /// </summary>
     public static class SchemaNavigator
-    {
+    {   
         /// <summary>
         /// Finds a sub-schema within a root schema based on a path.
         /// </summary>
@@ -18,6 +19,7 @@ namespace Armls.Schema
         public static JSchema? FindSchemaByPath(JSchema rootSchema, List<string> path)
         {
             JSchema? currentSchema = rootSchema;
+            Regex resourceTypeRegex = new Regex(@"([A-Za-z.]+)(\/[A-Za-z]+)+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             for (int i = 0; i < path.Count(); i++)
             {
@@ -71,6 +73,43 @@ namespace Armls.Schema
                     else
                     {
                         return null; // Array schema has no item definition.
+                    }
+                }
+                else if (resourceTypeRegex.IsMatch(segment)) {
+                    // "description" key will match the resource type
+                    while (true)
+                    {
+                        if (currentSchema.Description == segment)
+                        {
+                            break;
+                        }
+                        else if (currentSchema.Description is not null && segment.StartsWith(currentSchema.Description))
+                        {
+                            if (currentSchema.Properties["resources"].Items.Count == 0) return null;
+
+                            var childResources = currentSchema.Properties["resources"].Items[0].OneOf;
+
+                            var exactMatch = childResources.Where(r => r.Description == segment).FirstOrDefault();
+                            if (exactMatch != null)
+                            {
+                                currentSchema = exactMatch;
+                                break; // continue to traverse rest of the path
+                            }
+
+                            var prefixMatch = childResources.Where(r => segment.StartsWith(r.Description)).FirstOrDefault();
+                            if (prefixMatch != null)
+                            {
+                                currentSchema = prefixMatch;
+                            }
+                            else
+                            {
+                                return null;
+                            }
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
                 else

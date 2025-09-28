@@ -73,25 +73,33 @@ public class CompletionHandler : CompletionHandlerBase
 
         // Schema path contains the path /till/ the last element, which in our case is the field we are trying to write.
         // So we get the path only till the parent.
-	var parentNode = buffer.ConcreteTree.RootNode().DescendantForPoint(cursor).Parent();
-	if (parentNode is null) return completionList;
-	
-        var path = Json.JsonPathGenerator.FromNode(buffer, parentNode);
-        if (path is null || path.Count == 0) return completionList;
+        var parentNode = buffer.ConcreteTree.RootNode().DescendantForPoint(cursor).Parent();
+        if (parentNode is null) return completionList;
         
+        var path = Json.JsonPathGenerator.FromNode(buffer, parentNode, buffer.Text);
+        if (path is null || path.Count == 0) return completionList;
+
         var targetSchema = Schema.SchemaNavigator.FindSchemaByPath(schema, path);
         if (targetSchema is null) return completionList;
 
-	// Get existing keys
-	while (parentNode is not null && parentNode.Type != "object")
-	{
-	    parentNode = parentNode.Parent();
-	}
-	
-	var existingKeys = parentNode?.Keys().Select(n => n.Text(buffer.Text));
+        // Get existing keys
+        while (parentNode is not null && parentNode.Type != "object")
+        {
+            parentNode = parentNode.Parent();
+        }
+        
+        var existingKeys = parentNode?.Keys().Select(n => n.Text(buffer.Text));
+
+        // If schema is AnyOf or OneOf, we only show branches that match with the fields already existing on the object
+        if (existingKeys is not null && (targetSchema.AnyOf.Count != 0 || targetSchema.OneOf.Count != 0))
+        {
+            var applicableBranches = targetSchema.AnyOf.Concat(targetSchema.OneOf).Where(schema => existingKeys.All(k => schema.Properties.ContainsKey(k)));
+            return new CompletionList(applicableBranches.SelectMany(b => FindCompletionCandidates(b)).DistinctBy(c => c.Label + ":" + c.Documentation)
+                                 .Where(c => !existingKeys.Contains(c.Label)));
+        }
 
         return new CompletionList(
-	    FindCompletionCandidates(targetSchema).DistinctBy(c => c.Label + ":" + c.Documentation)
+            FindCompletionCandidates(targetSchema).DistinctBy(c => c.Label + ":" + c.Documentation)
                    .Where(c => existingKeys is not null && !existingKeys.Contains(c.Label)));
     }
 

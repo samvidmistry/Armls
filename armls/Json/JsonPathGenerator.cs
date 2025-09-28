@@ -1,4 +1,4 @@
-using Armls.Buffer;
+﻿using Armls.Buffer;
 using Armls.TreeSitter;
 using System.Collections.Generic;
 
@@ -15,8 +15,9 @@ namespace Armls.Json
         /// </summary>
         /// <param name="buffer">The document buffer containing the source text, used to get key names.</param>
         /// <param name="startNode">The node to start traversal from.</param>
+        /// <param name="bufferText">Text of the buffer which startNode is part of.</param>
         /// <returns>A list of strings representing the JSON path.</returns>
-        public static List<string> FromNode(Buffer.Buffer buffer, TSNode startNode)
+        public static List<string> FromNode(Buffer.Buffer buffer, TSNode startNode, string bufferText)
         {
             var path = new List<string>();
             var currentNode = startNode;
@@ -37,16 +38,33 @@ namespace Armls.Json
                 }
                 else if (currentNode.Type == "array")
                 {
-                    uint index = 0;
+                    bool found = false;
                     for (uint i = 0; i < currentNode.NamedChildCount; i++)
                     {
-                        if (currentNode.NamedChild(i).Equals(startNode))
+                        if (currentNode.NamedChild(i).DescendantForPointRange(startNode.Start, startNode.End).NodeEquals(startNode))
                         {
-                            index = i;
+                            path.Insert(0, i.ToString());
+                            found = true;
                             break;
                         }
                     }
-                    path.Insert(0, index.ToString());
+                    if (found) continue;
+                    
+                    throw new InvalidOperationException("StartNode not a child of any array element.");
+                }
+                else if (currentNode.Type == "object" && currentNode.Keys().Select(n => n.Text(bufferText)).Contains("apiVersion"))
+                {
+                    // We are at a top-level resource declaration in the template
+                    for (uint i = 0; i < currentNode.NamedChildCount; i++)
+                    {
+                        var childNodeText = currentNode.NamedChild(i).ChildByFieldName("key")?.Text(bufferText).Trim('"') ?? "";
+                        if (childNodeText == "type")
+                        {
+                            path.Insert(0, currentNode.NamedChild(i).ChildByFieldName("value")?.Text(bufferText).Trim('"') ??
+                                           throw new InvalidOperationException("Value node not found for \"type\" key."));
+                            break;
+                        }
+                    }
                 }
             }
 
